@@ -69,18 +69,3 @@ Contributions are welcome! If you'd like to contribute:
    git push origin feature-name
    ```
 5. Open a Pull Request.
-
----
-
-## License
-
-Tymora's Pocket is licensed under the [MIT License](LICENSE).
-
----
-
-## Future Plans
-
-- Add robust testing for all core components.
-- Enhance documentation with detailed usage guides.
-- Expand interface support and user management capabilities.
-
