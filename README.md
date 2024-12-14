@@ -8,7 +8,7 @@ Tymora's Pocket is a versatile and persistent virtual dice-rolling utility. Name
 
 - **Persistent Virtual Dice:**
   - Dice have persistent states, including seeds and roll history.
-  - Roll history affects luck calculations, dynamically updated based on recent rolls.
+  - Dice have detailed descriptions, including info about "luck" - ie, how well it has been rolling lately
 
 - **DiceBag:**
   - Manages a group's collection of dice.
