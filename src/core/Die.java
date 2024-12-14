@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import utils.StatsUtil;
 
 /**
  * Represents a die with a customizable number of sides, a nickname, and a history of rolls.
@@ -33,7 +34,7 @@ public class Die implements Serializable, Rollable{
     private List<Integer> rollHistory;
     private List<String> userHistory;
     private String nickname;
-    public final int LUCK_WINDOW=10;
+    public final int LUCK_WINDOW=9;
     private double luck;
     public boolean canDraw;
 
@@ -260,32 +261,15 @@ public class Die implements Serializable, Rollable{
      * Updates the die's luck based on recent roll history.
      */
     public double getLuck() {
-        if (rollHistory.size() < LUCK_WINDOW) {
+        if (rollHistory.size() < 3) {
             this.luck = 0.0; // Neutral luck if too few rolls
-            LOGGER.log(Level.FINE, "core.Die is too green to have luck");
+            LOGGER.log(Level.FINE, "Die is too green to have luck");
             return luck; // Exit early if there aren't enough rolls
         }
 
         // Get the most recent LUCK_WINDOW rolls
         List<Integer> recentRolls = getHistory().subList(getHistory().size() - LUCK_WINDOW, getHistory().size());
-
-        // Calculate the expected mean sum for the window of rolls
-        double expectedMeanSum = LUCK_WINDOW * ((sides + 1) / 2.0);
-
-        // Calculate the expected variance sum (using the correct formula for variance)
-        double expectedVarianceSum = LUCK_WINDOW * ((sides * sides - 1) / 12.0); // This is for a d6, adjust for other n-sided dice if needed.
-
-        // Calculate the standard deviation
-        double standardDeviation = Math.sqrt(expectedVarianceSum);
-
-        // Calculate the actual sum of the most recent rolls
-        double actualSum = recentRolls.stream()
-                .mapToInt(Integer::intValue)
-                .sum();
-
-        // Calculate the luck (number of standard deviations above or below the mean)
-        this.luck = (actualSum - expectedMeanSum ) / standardDeviation;
-        return luck;
+        return StatsUtil.getLuck(recentRolls.stream().mapToInt(Integer::intValue).toArray(),sides);
     }
 
     // ========================

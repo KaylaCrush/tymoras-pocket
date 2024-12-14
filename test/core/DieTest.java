@@ -1,4 +1,5 @@
-import core.Die;
+package core;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,7 +17,6 @@ public class DieTest {
     @BeforeEach
     public void setUp() {
         die = new Die(6); // Create a 6-sided die before each test
-        die.setLoggingLevel(Level.FINEST );
     }
 
     // Method that sets the rollHistory field of the core.Die class using reflection
