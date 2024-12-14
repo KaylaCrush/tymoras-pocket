@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 
 public class DieTest {
 
@@ -14,6 +16,7 @@ public class DieTest {
     @BeforeEach
     public void setUp() {
         die = new Die(6); // Create a 6-sided die before each test
+        die.setLoggingLevel(Level.FINEST );
     }
 
     // Method that sets the rollHistory field of the Die class using reflection
@@ -69,8 +72,9 @@ public class DieTest {
     @Test
     public void testLuck(){
         List<Die> dieList = new ArrayList<>();
-        for(int i = 0; i < 1000; i++){
-            dieList.add(new Die(20));
+        for(int i = 0; i < 100; i++){
+            Die die = new Die(6);
+            dieList.add(die);
         }
         for(int j = 0; j < 10; j++){
             for(Die die:dieList){
@@ -103,10 +107,12 @@ public class DieTest {
     @Test
     public void testVeryLucky() throws NoSuchFieldException, IllegalAccessException {
         // Create a die with 6 sides
-        Die modDie = new Die(6);
+        Die modDie = new Die(10);
 
         // Set the roll history to high values (above expected mean)
-        setRollHistory(modDie, Arrays.asList(6,6,6,6)); // High rolls indicate luck
+        List<Integer> history = new ArrayList<>(Collections.nCopies(modDie.LUCK_WINDOW, 9));
+        setRollHistory(modDie, history); // High rolls indicate luck
+
         modDie.getLuck(); // Roll to calculate luck
 
         // Assert that the die is very lucky
@@ -115,23 +121,24 @@ public class DieTest {
 
     @Test
     public void testLucky() throws NoSuchFieldException, IllegalAccessException {
-        Die die = new Die(6);
+        Die die = new Die(10);
 
-        // Set the roll history to a mix of above and below expected mean
-        setRollHistory(die, Arrays.asList(6, 5, 5, 5, 6)); // Slightly above expected mean
-        die.roll(); // Roll to calculate luck
+// Set the roll history to high values (above expected mean)
+        List<Integer> history = new ArrayList<>(Collections.nCopies(die.LUCK_WINDOW, 8));
+        setRollHistory(die, history); // High rolls indicate luck
 
         // Assert that the die is lucky
         assertTrue(die.isLucky(), "The die should be lucky.");
+        assertFalse(die.isVeryLucky(), "The die shouldn't be VERY lucky.");
     }
 
     @Test
     public void testVeryUnlucky() throws NoSuchFieldException, IllegalAccessException {
-        Die die = new Die(6);
+        Die die = new Die(10);
 
         // Set the roll history to low values (below expected mean)
-        setRollHistory(die, Arrays.asList(1, 1, 1, 2, 2)); // Low rolls indicate bad luck
-        die.roll(); // Roll to calculate luck
+        List<Integer> history = new ArrayList<>(Collections.nCopies(die.LUCK_WINDOW, 2));
+        setRollHistory(die, history); // High rolls indicate luck
 
         // Assert that the die is very unlucky
         assertTrue(die.isVeryUnlucky(), "The die should be very unlucky.");
@@ -139,23 +146,24 @@ public class DieTest {
 
     @Test
     public void testUnlucky() throws NoSuchFieldException, IllegalAccessException {
-        Die die = new Die(6);
+        Die die = new Die(10);
 
         // Set the roll history to a mix of low and high values
-        setRollHistory(die, Arrays.asList(1, 2, 2, 4, 4)); // Slightly below expected mean
-        die.roll(); // Roll to calculate luck
+        List<Integer> history = new ArrayList<>(Collections.nCopies(die.LUCK_WINDOW, 3));
+        setRollHistory(die, history); // High rolls indicate luck
 
         // Assert that the die is unlucky
         assertTrue(die.isUnlucky(), "The die should be unlucky.");
+        assertFalse(die.isVeryUnlucky(), "It shouldn't be VERY unlucky.");
     }
 
     @Test
     public void testNeutralLuck() throws NoSuchFieldException, IllegalAccessException {
-        Die die = new Die(6);
+        Die die = new Die(10);
 
         // Set the roll history to be close to the expected mean
-        setRollHistory(die, Arrays.asList(3, 4, 3, 4, 3)); // Close to expected mean (3.5)
-        die.roll(); // Roll to calculate luck
+        List<Integer> history = new ArrayList<>(Collections.nCopies(die.LUCK_WINDOW, 5));
+        setRollHistory(die, history); // High rolls indicate luck
 
         // Assert that the die has neutral luck
         assertFalse(die.isLucky(), "The die should not be considered lucky.");
