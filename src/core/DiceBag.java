@@ -56,7 +56,7 @@ public class DiceBag implements Serializable{
      */
     public List<Die> getDice(int sides, int count) {
         List<Die> matches = new java.util.ArrayList<>(diceCollection.stream()
-                .filter(die -> die.getSides() == sides && die.canDraw)
+                .filter(die -> die.getSides() == sides )
                 .limit(count)
                 .toList());
         while (matches.size() < count) {

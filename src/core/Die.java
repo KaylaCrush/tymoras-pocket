@@ -4,7 +4,10 @@ import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import utils.DescriptionGenerator;
 import utils.StatsUtil;
+
 
 /**
  * Represents a die with a customizable number of sides, a nickname, and a history of rolls.
@@ -26,8 +29,8 @@ public class Die implements Serializable, Rollable{
     // ========================
     @Serial
     private static final long serialVersionUID = 1L;
+    private int hash;
     private final int sides;
-    private HashMap<String, String> traits;
     private transient Random rand;
     private long seed;
     private int face;
@@ -35,8 +38,6 @@ public class Die implements Serializable, Rollable{
     private List<String> userHistory;
     private String nickname;
     public final int LUCK_WINDOW=9;
-    private double luck;
-    public boolean canDraw;
 
     /**
      * Constructs a die with the specified number of sides.
@@ -44,20 +45,20 @@ public class Die implements Serializable, Rollable{
      */
     public Die(int sides){
         LOGGER.log(Level.FINE, "Forging a fresh "+sides+"-sided die");
-        this.nickname = null;
         this.sides = sides;
-        traits = new HashMap<>();
+        this.hash = this.hashCode();
+        rollHistory = new ArrayList<>();
+        userHistory = new ArrayList<>();
+        this.nickname = null;
+
         rand = new Random();
         seed = rand.nextLong();
         rand.setSeed(seed);
+
         LOGGER.log(Level.FINE,"Generated personal random seed: " + seed);
-        face = sides;
-        luck = 0.0;
-        rollHistory = new ArrayList<>();
-        userHistory = new ArrayList<>();
-        generateTraits();
-        LOGGER.log(Level.FINE,"Generated personal traits: " + traits);
-        canDraw = true;
+
+        setFace(sides);
+
     }
 
     // ========================
@@ -69,7 +70,6 @@ public class Die implements Serializable, Rollable{
      */
     public void setNickname(String nickname){
         this.nickname = nickname;
-        canDraw = false;
     }
     /**
      * Retrieves the nickname of the die.
@@ -167,110 +167,32 @@ public class Die implements Serializable, Rollable{
 
     }
 
+    public int getHash(){
+        return hash;
+    }
+
 
     // ========================
     // Generating Description
     // ========================
 
-    /**
-     * Generates the die's traits, (currently just its material)
-     */
-    private void generateTraits() {
-        traits.put("mat", generateMaterial());  // Use the MaterialGenerator here
-    }
 
-    /**
-     * Retrieves the material trait of the die.
-     * @return The material of the die.
-     */
-    public String getMaterial(){
-        return traits.get("mat");
-    }
 
     /**
      * Generates a basic description of the die, including its material and number of sides.
      * @return A string describing the die.
      */
-    private String generateBasicDescription(){
-        String retString = new String();
-        if(nickname != null) retString = nickname + ", a";
-        else retString = "A";
-        String mat = getMaterial();
-        if (startsWithVowel(mat)) retString = retString + "n";
-        return retString + " " + mat +" "+sides+"-sided die.";
-    }
 
-    /**
-     * Generates a description of the die's luck based on recent rolls.
-     * @return A string describing the die's luck.
-     */
-    private String generateLuckDescription(){
-        if(isVeryLucky()) return "It shines with an otherworldly brilliance, as if touched by fortune herself.";
-        if(isLucky()) return "It feels light and ready, as if favor lingers nearby.";
-        if(isVeryUnlucky()) return "It exudes an unsettling and malevolent aura, as if shadowed by an ancient curse.";
-        if(isUnlucky()) return "It caries an ominous stillness, as if misfortune waits in the wings.";
-        if(getHistory().isEmpty()) return "It is pristine and unused.";
-        if(getHistory().size() < LUCK_WINDOW) return "It looks almost new.";
-        return "";
-    }
 
-    /**
-     * Checks if a string starts with a vowel.
-     * @param string The string to check.
-     * @return True if the string starts with a vowel, false otherwise.
-     */
-    private boolean startsWithVowel(String string){
-        return string.matches("^[aeiouAEIOU][A-Za-z0-9_]*");
 
-    }
 
     /**
      * Returns a string describing the die, including its basic description and luck.
      * @return A string describing the die.
      */
-    public String toString(){ return generateBasicDescription()+" "+generateLuckDescription(); }
+    public String toString(){ return DescriptionGenerator.generateDescription(this); }
 
-    // ========================
-    // Luck Be a Method
-    // ========================
-    /**
-     * Checks if the die is considered lucky.
-     * @return True if the die's luck exceeds 2.0, indicating luck.
-     */
-    public boolean isLucky(){ return getLuck() > 2.0; }
 
-    /**
-     * Checks if the die is considered very lucky.
-     * @return True if the die's luck exceeds 3.0, indicating very high luck.
-     */
-    public boolean isVeryLucky(){ return getLuck() > 3.0; }
-
-    /**
-     * Checks if the die is considered unlucky.
-     * @return True if the die's luck is below -2.0, indicating bad luck.
-     */
-    public boolean isUnlucky(){ return getLuck() < -2.0; }
-
-    /**
-     * Checks if the die is considered very unlucky.
-     * @return True if the die's luck is below -3.0, indicating very bad luck.
-     */
-    public boolean isVeryUnlucky(){ return getLuck() < -3.0; }
-
-    /**
-     * Updates the die's luck based on recent roll history.
-     */
-    public double getLuck() {
-        if (rollHistory.size() < 3) {
-            this.luck = 0.0; // Neutral luck if too few rolls
-            LOGGER.log(Level.FINE, "Die is too green to have luck");
-            return luck; // Exit early if there aren't enough rolls
-        }
-
-        // Get the most recent LUCK_WINDOW rolls
-        List<Integer> recentRolls = getHistory().subList(getHistory().size() - LUCK_WINDOW, getHistory().size());
-        return StatsUtil.getLuck(recentRolls.stream().mapToInt(Integer::intValue).toArray(),sides);
-    }
 
     // ========================
     // Readers and Writers
@@ -315,29 +237,5 @@ public class Die implements Serializable, Rollable{
 
     }
 
-    /*
-        Helper functions to generate more colorful item descriptions
-     */
 
-    private static final List<String> COMMON = List.of("plastic", "acrylic");
-    private static final List<String> METALS = List.of("iron", "steel", "bronze", "gold", "silver", "platinum", "mithril");
-    private static final List<String> STONES = List.of("granite", "marble", "limestone", "obsidian", "basalt", "jade", "serpentine");
-    private static final List<String> WOODS = List.of("oak", "birch", "mahogany", "teak", "ebony", "pine");
-    private static final List<String> GEMS = List.of("ruby", "sapphire", "emerald", "amethyst", "diamond", "opal");
-    private static final List<String> BONES = List.of("cow bone", "pig bone", "horse bone", "human bone", "dragon bone");
-    private static final List<String> OTHER_MATERIALS = List.of("ivory", "glass", "ceramic", "clay", "chitin");
-
-    private String generateMaterial() {
-        List<List<String>> categories = List.of(COMMON, METALS, COMMON, STONES, COMMON, WOODS, COMMON, GEMS, COMMON, BONES, COMMON, OTHER_MATERIALS);
-        List<String> chosenCategory = categories.get(rand.nextInt(categories.size())); // Pick a category
-        String material = chosenCategory.get(rand.nextInt(chosenCategory.size())); // Pick a material within the category
-
-        // Add descriptive elements
-        String[] adjectives = {"polished", "rough-hewn", "engraved", "ancient", "shimmering", "ornate", "pristine", "primitive", "masterwork"};
-        String adjective = "";
-        if (rand.nextInt(10) > 7) {
-            adjective = adjectives[rand.nextInt(adjectives.length)] + " ";
-        }
-        return adjective + material;
-    }
 }

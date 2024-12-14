@@ -81,27 +81,4 @@ public class DiceSet implements Serializable {
                 ", dice=" + diceCollection +
                 '}';
     }
-
-    public static void main(String[] args) {
-        DiceBag bag = new DiceBag();
-
-        DiceSet set = new DiceSet(bag, "1000d6","Test");
-        for(int i=0; i < 10; i++){
-            set.rollAll();
-        }
-        int luckySum = 0;
-        int unluckySum = 0;
-        List<Die> interestingDie = new ArrayList<>();
-        for(Die die : set.getDiceCollection()){
-            if(die.isVeryLucky()){
-                interestingDie.add(die);
-                luckySum++;
-            } else if(die.isVeryUnlucky()){
-                interestingDie.add(die);
-                unluckySum++;
-            }
-        }
-        System.out.println(interestingDie);
-        System.out.println("Lucky: "+luckySum+ " Unlucky: "+unluckySum);
-    }
 }
