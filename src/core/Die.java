@@ -1,5 +1,9 @@
+package core;
+
 import java.io.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Represents a die with a customizable number of sides, a nickname, and a history of rolls.
@@ -13,6 +17,12 @@ import java.util.*;
  * The class also supports serialization to persist the state of the die, including its random seed.
  */
 public class Die implements Serializable{
+    private static final Logger LOGGER = Logger.getLogger( Die.class.getName() );
+
+
+    // ========================
+    // Fields and Constructors
+    // ========================
     @Serial
     private static final long serialVersionUID = 1L;
     private final int sides;
@@ -23,37 +33,43 @@ public class Die implements Serializable{
     private List<Integer> rollHistory;
     private List<String> userHistory;
     private String nickname;
-
-    private final int LUCK_WINDOW=4;
+    public final int LUCK_WINDOW=10;
     private double luck;
+    public boolean canDraw;
 
     /**
      * Constructs a die with the specified number of sides.
      * @param sides The number of sides for the die (e.g., 6 for a standard die).
      */
     public Die(int sides){
+        LOGGER.log(Level.FINE, "Forging a fresh "+sides+"-sided die");
         this.nickname = null;
         this.sides = sides;
-        traits = new HashMap<String, String>();
+        traits = new HashMap<>();
         rand = new Random();
         seed = rand.nextLong();
         rand.setSeed(seed);
+        LOGGER.log(Level.FINE,"Generated personal random seed: " + seed);
         face = sides;
         luck = 0.0;
         rollHistory = new ArrayList<>();
         userHistory = new ArrayList<>();
         generateTraits();
+        LOGGER.log(Level.FINE,"Generated personal traits: " + traits);
+        canDraw = true;
     }
 
+    // ========================
+    // Getters and Setters
+    // ========================
     /**
      * Sets the nickname for the die.
      * @param nickname The nickname to assign to the die.
      */
     public void setNickname(String nickname){
         this.nickname = nickname;
+        canDraw = false;
     }
-
-
     /**
      * Retrieves the nickname of the die.
      * @return The nickname of the die, or null if not set.
@@ -61,7 +77,6 @@ public class Die implements Serializable{
     public String getNickname(){
         return nickname;
     }
-
 
     /**
      * Returns the number of sides on the die.
@@ -87,20 +102,23 @@ public class Die implements Serializable{
         return rollHistory;
     }
 
-    public int roll() {
-        return this.roll("Test");
-    }
+    // ========================
+    // Rolling and Superstition
+    // ========================
+    public int roll() { return this.roll("Test"); }
 
     /**
      * Rolls the die and records the result, using a default user label.
      * @return The face value of the die after the roll.
      */
     public int roll(String user){
+        LOGGER.log(Level.FINE, "Forging a fresh roll");
         this.face = rand.nextInt(sides)+1;
+        LOGGER.log(Level.FINE, "Landed on face: " + face);
         this.rollHistory.add(face);
         this.userHistory.add(user);
+        LOGGER.log(Level.FINE, "Added roll to the annals: "+user+" rolled a "+face);
         updateSeed();
-        getLuck();
 
         return this.face;
     }
@@ -108,6 +126,7 @@ public class Die implements Serializable{
     private void updateSeed(){
         this.seed = rand.nextLong();
         rand.setSeed(seed);
+        LOGGER.log(Level.FINE, "Updated seed: " + seed);
     }
 
     /**
@@ -117,10 +136,19 @@ public class Die implements Serializable{
      */
     public boolean setFace(int face) {
         if((0 >= face) || (face >= sides + 1)){
+            LOGGER.log(Level.FINE, "Failed to set die to face. Face out of bounds: "+face);
             return false;
         }
         this.face = face;
+        LOGGER.log(Level.FINE, "Set die to: " + face);
         return true;
+    }
+
+    /**
+     * Places a die so its highest face is on top. For luck.
+     */
+    public void placeDie(){
+        setFace(sides);
     }
 
     /**
@@ -128,9 +156,15 @@ public class Die implements Serializable{
      * @return A random boolean value.
      */
     public boolean blow(){
+        LOGGER.log(Level.FINE,"Blowing on the die");
         return rand.nextBoolean();
 
     }
+
+
+    // ========================
+    // Generating Description
+    // ========================
 
     /**
      * Generates the die's traits, (currently just its material)
@@ -166,9 +200,11 @@ public class Die implements Serializable{
      */
     private String generateLuckDescription(){
         if(isVeryLucky()) return "It shines with an otherworldly brilliance, as if touched by fortune herself.";
-        if(isLucky()) return "It carries an eager readiness, as if favor lingers nearby.";
-        if(isVeryUnlucky()) return "It exudes an unsettling malevolent aura, as if shadowed by an ancient curse.";
+        if(isLucky()) return "It feels light and ready, as if favor lingers nearby.";
+        if(isVeryUnlucky()) return "It exudes an unsettling and malevolent aura, as if shadowed by an ancient curse.";
         if(isUnlucky()) return "It caries an ominous stillness, as if misfortune waits in the wings.";
+        if(getHistory().isEmpty()) return "It is pristine and unused.";
+        if(getHistory().size() < LUCK_WINDOW) return "It looks almost new.";
         return "";
     }
 
@@ -186,61 +222,70 @@ public class Die implements Serializable{
      * Returns a string describing the die, including its basic description and luck.
      * @return A string describing the die.
      */
-    public String toString(){ return generateBasicDescription()+generateLuckDescription(); }
+    public String toString(){ return generateBasicDescription()+" "+generateLuckDescription(); }
 
+    // ========================
+    // Luck Be a Method
+    // ========================
     /**
      * Checks if the die is considered lucky.
      * @return True if the die's luck exceeds 2.0, indicating luck.
      */
-    public boolean isLucky(){ return luck > 2.0; }
+    public boolean isLucky(){ return getLuck() > 2.0; }
 
     /**
      * Checks if the die is considered very lucky.
      * @return True if the die's luck exceeds 3.0, indicating very high luck.
      */
-    public boolean isVeryLucky(){ return luck > 3.0; }
+    public boolean isVeryLucky(){ return getLuck() > 3.0; }
 
     /**
      * Checks if the die is considered unlucky.
      * @return True if the die's luck is below -2.0, indicating bad luck.
      */
-    public boolean isUnlucky(){ return luck < -2.0; }
+    public boolean isUnlucky(){ return getLuck() < -2.0; }
 
     /**
      * Checks if the die is considered very unlucky.
      * @return True if the die's luck is below -3.0, indicating very bad luck.
      */
-    public boolean isVeryUnlucky(){ return luck < -3.0; }
+    public boolean isVeryUnlucky(){ return getLuck() < -3.0; }
 
     /**
      * Updates the die's luck based on recent roll history.
      */
     public double getLuck() {
-        if (rollHistory.isEmpty()) {
-            this.luck = 0.0; // Neutral luck if few rolls
-            return luck; // Exit early if no rolls
+        if (rollHistory.size() < LUCK_WINDOW) {
+            this.luck = 0.0; // Neutral luck if too few rolls
+            LOGGER.log(Level.FINE, "core.Die is too green to have luck");
+            return luck; // Exit early if there aren't enough rolls
         }
 
-        List<Integer> recentRolls = new ArrayList<>(rollHistory.subList(Math.max(0, rollHistory.size() - LUCK_WINDOW), rollHistory.size()));
-        int numRolls = recentRolls.size();
-        double expectedMean = (sides + 1) / 2.0;
-        double expectedVariance = numRolls*((sides * sides - 1) / (12.0)); // Correct formula for variance
-        double standardDeviation = Math.sqrt(expectedVariance);
-        double actualMean = recentRolls.isEmpty() ? 0.0 : recentRolls.stream()
+        // Get the most recent LUCK_WINDOW rolls
+        List<Integer> recentRolls = getHistory().subList(getHistory().size() - LUCK_WINDOW, getHistory().size());
+
+        // Calculate the expected mean sum for the window of rolls
+        double expectedMeanSum = LUCK_WINDOW * ((sides + 1) / 2.0);
+
+        // Calculate the expected variance sum (using the correct formula for variance)
+        double expectedVarianceSum = LUCK_WINDOW * ((sides * sides - 1) / 12.0); // This is for a d6, adjust for other n-sided dice if needed.
+
+        // Calculate the standard deviation
+        double standardDeviation = Math.sqrt(expectedVarianceSum);
+
+        // Calculate the actual sum of the most recent rolls
+        double actualSum = recentRolls.stream()
                 .mapToInt(Integer::intValue)
-                .average()
-                .orElse(0.0);
+                .sum();
 
-        this.luck = (actualMean - expectedMean) / standardDeviation;
+        // Calculate the luck (number of standard deviations above or below the mean)
+        this.luck = (actualSum - expectedMeanSum ) / standardDeviation;
         return luck;
-
-//        // Debugging output for luck
-//        System.out.println("Expected mean: " + expectedMean);
-//        System.out.println("Actual mean: " + actualMean);
-//        System.out.println("Standard deviation: " + standardDeviation);
-//        System.out.println("Luck: " + this.luck);
     }
 
+    // ========================
+    // Readers and Writers
+    // ========================
     /**
      * Serializes the object, preserving the seed for the Random instance.
      * @param ois The ObjectInputStream used for deserialization.
@@ -263,16 +308,27 @@ public class Die implements Serializable{
         oos.defaultWriteObject();
     }
 
+    // ========================
+    // Demo
+    // ========================
     /**
-     * Main method to demonstrate the functionality of the Die class.
+     * Main method to demonstrate the functionality of the core.Die class.
      * @param args Command-line arguments.
      */
     public static void main(String[] args) {
         Die die = new Die(20);
         System.out.println("BEHOLD: A DIE!\n" + die);
+        for(int i=0; i < 10; i ++){
+            die.roll("Daemon");
+            System.out.println("BEHOLD: A "+die.getFace()+" has been rolled!");
+        }
+        System.out.println(die);
 
     }
 
+    /*
+        Helper functions to generate more colorful item descriptions
+     */
 
     private static final List<String> COMMON = List.of("plastic", "acrylic");
     private static final List<String> METALS = List.of("iron", "steel", "bronze", "gold", "silver", "platinum", "mithril");

@@ -1,9 +1,11 @@
+package core;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DiceSet implements Serializable {
-    private List<Die> diceCollection; // Ensure Die is Serializable
+    private List<Die> diceCollection; // Ensure core.Die is Serializable
     private int fixedBonus;
     private String nickname;
     private DiceBag db;
@@ -73,7 +75,7 @@ public class DiceSet implements Serializable {
 
     @Override
     public String toString() {
-        return "DiceSet{" +
+        return "core.DiceSet{" +
                 "nickname='" + nickname + '\'' +
                 ", fixedBonus=" + fixedBonus +
                 ", dice=" + diceCollection +
