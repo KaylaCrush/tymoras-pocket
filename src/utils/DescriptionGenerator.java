@@ -3,19 +3,22 @@ package utils;
 import core.Die;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Level;
 
 public class DescriptionGenerator {
 
     public static String generateDescription(Die die){
-        return generateBasicDescription(die);
+        return generateBasicDescription(die) + " " + generateLuckDescription(die);
     }
 
+    /**
+     * Generates a basic description of the die, including its material and number of sides.
+     * @return A string describing the die.
+     */
     private static String generateBasicDescription(Die die){
-        String retString = new String();
+        String retString;
         if(die.getNickname() != null) retString = die.getNickname() + ", a";
         else retString = "A";
-        String mat = generateMaterial(die.getHash());
+        String mat = generateMaterial(die.getId());
         if (startsWithVowel(mat)) retString = retString + "n";
         return retString + " " + mat +" "+die.getSides()+"-sided die.";
     }
@@ -27,57 +30,27 @@ public class DescriptionGenerator {
      */
     private static boolean startsWithVowel(String string){
         return string.matches("^[aeiouAEIOU][A-Za-z0-9_]*");
-
-
     }
-
 
     /**
      * Generates a description of the die's luck based on recent rolls.
      * @return A string describing the die's luck.
      */
-    private String generateLuckDescription(Die die){
-        if(isVeryLucky(die)) return "It shines with an otherworldly brilliance, as if touched by fortune herself.";
-        if(isLucky(die)) return "It feels light and ready, as if favor lingers nearby.";
-        if(isVeryUnlucky(die)) return "It exudes an unsettling and malevolent aura, as if shadowed by an ancient curse.";
-        if(isUnlucky(die)) return "It caries an ominous stillness, as if misfortune waits in the wings.";
+    private static String generateLuckDescription(Die die){
+        double luck = getLuck(die);
+        if(luck > 3.0) return "It shines with an otherworldly brilliance, as if touched by fortune herself.";
+        if(luck > 2.0) return "It feels light and ready, as if favor lingers nearby.";
+        if(luck < -3.0) return "It exudes an unsettling and malevolent aura, as if shadowed by an ancient curse.";
+        if(luck < -2.0) return "It caries an ominous stillness, as if misfortune waits in the wings.";
         if(die.getHistory().isEmpty()) return "It is pristine and unused.";
         if(die.getHistory().size() < die.LUCK_WINDOW) return "It looks almost new.";
         return "";
     }
 
-
-    // ========================
-    // Luck Be a Method
-    // ========================
     /**
-     * Checks if the die is considered lucky.
-     * @return True if the die's luck exceeds 2.0, indicating luck.
+     * Determines the die's luck based on recent roll history.
      */
-    public boolean isLucky(Die die){ return getLuck(die) > 2.0; }
-
-    /**
-     * Checks if the die is considered very lucky.
-     * @return True if the die's luck exceeds 3.0, indicating very high luck.
-     */
-    public boolean isVeryLucky(Die die){ return getLuck(die) > 3.0; }
-
-    /**
-     * Checks if the die is considered unlucky.
-     * @return True if the die's luck is below -2.0, indicating bad luck.
-     */
-    public boolean isUnlucky(Die die){ return getLuck(die) < -2.0; }
-
-    /**
-     * Checks if the die is considered very unlucky.
-     * @return True if the die's luck is below -3.0, indicating very bad luck.
-     */
-    public boolean isVeryUnlucky(Die die){ return getLuck(die) < -3.0; }
-
-    /**
-     * Updates the die's luck based on recent roll history.
-     */
-    public double getLuck(Die die) {
+    public static double getLuck(Die die) {
         if (die.getHistory().size() < 3) {
 
             return 0.0; // Exit early if there aren't enough rolls
@@ -100,8 +73,8 @@ public class DescriptionGenerator {
     private static final List<String> BONES = List.of("cow bone", "pig bone", "horse bone", "human bone", "dragon bone");
     private static final List<String> OTHER_MATERIALS = List.of("ivory", "glass", "ceramic", "clay", "chitin");
 
-    private static String generateMaterial(int hash) {
-        Random rand = new Random(hash);
+    private static String generateMaterial(int id) {
+        Random rand = new Random(id);
         List<List<String>> categories = List.of(COMMON, METALS, COMMON, STONES, COMMON, WOODS, COMMON, GEMS, COMMON, BONES, COMMON, OTHER_MATERIALS);
         List<String> chosenCategory = categories.get(rand.nextInt(categories.size())); // Pick a category
         String material = chosenCategory.get(rand.nextInt(chosenCategory.size())); // Pick a material within the category

@@ -29,7 +29,7 @@ public class Die implements Serializable, Rollable{
     // ========================
     @Serial
     private static final long serialVersionUID = 1L;
-    private int hash;
+    private int id;
     private final int sides;
     private transient Random rand;
     private long seed;
@@ -46,12 +46,12 @@ public class Die implements Serializable, Rollable{
     public Die(int sides){
         LOGGER.log(Level.FINE, "Forging a fresh "+sides+"-sided die");
         this.sides = sides;
-        this.hash = this.hashCode();
         rollHistory = new ArrayList<>();
         userHistory = new ArrayList<>();
         this.nickname = null;
 
         rand = new Random();
+        this.id = rand.nextInt();
         seed = rand.nextLong();
         rand.setSeed(seed);
 
@@ -167,23 +167,9 @@ public class Die implements Serializable, Rollable{
 
     }
 
-    public int getHash(){
-        return hash;
+    public int getId(){
+        return id;
     }
-
-
-    // ========================
-    // Generating Description
-    // ========================
-
-
-
-    /**
-     * Generates a basic description of the die, including its material and number of sides.
-     * @return A string describing the die.
-     */
-
-
 
 
     /**

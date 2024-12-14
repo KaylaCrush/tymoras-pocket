@@ -70,7 +70,6 @@ public class DiceSet implements Serializable {
         return diceCollection.stream().mapToInt(die->die.roll(user)).sum() + fixedBonus;
     }
 
-
     public void setNickname(String nickname) { this.nickname = nickname; }
 
     @Override
