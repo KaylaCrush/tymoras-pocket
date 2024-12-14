@@ -51,51 +51,6 @@ Tymora's Pocket is a versatile and persistent virtual dice-rolling utility. Name
 
 ---
 
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/tymoras-pocket.git
-   cd tymoras-pocket
-   ```
-2. Build the project:
-   ```bash
-   ./gradlew build
-   ```
-3. Run the application:
-   ```bash
-   ./gradlew run
-   ```
-
----
-
-## Usage
-
-Currently, Tymora's Pocket is in active development. The main functionality focuses on creating, managing, and rolling dice through the DiceBag and DiceSet classes.
-
-Example usage:
-
-```java
-DiceBag myBag = new DiceBag("My Lucky Bag");
-
-// Add dice to the bag
-myBag.addDie(new Die(6));
-myBag.addDie(new Die(20));
-
-// Roll a 20-sided die
-Die d20 = myBag.getDice(20, 1).get(0);
-System.out.println("Rolled a " + d20.roll());
-
-// Save the DiceBag
-myBag.saveBag("dicebag.dat");
-
-// Load the DiceBag
-DiceBag loadedBag = DiceBag.loadBag("dicebag.dat");
-System.out.println("Loaded Bag: " + loadedBag);
-```
-
----
-
 ## Contributing
 
 Contributions are welcome! If you'd like to contribute:
