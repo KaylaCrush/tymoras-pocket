@@ -16,7 +16,7 @@ import java.util.logging.Logger;
  * <p>
  * The class also supports serialization to persist the state of the die, including its random seed.
  */
-public class Die implements Serializable{
+public class Die implements Serializable, Rollable{
     private static final Logger LOGGER = Logger.getLogger( Die.class.getName() );
 
 
@@ -106,6 +106,11 @@ public class Die implements Serializable{
     // Rolling and Superstition
     // ========================
     public int roll() { return this.roll("Test"); }
+
+    @Override
+    public int getResult() {
+        return getHistory().getLast();
+    }
 
     /**
      * Rolls the die and records the result, using a default user label.
